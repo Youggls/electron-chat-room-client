@@ -22,23 +22,26 @@
 </template>
 
 <script>
-
 export default {
-  name: "Login",
+  name: 'Login',
   data() {
     return {
-      serverAddress: "127.0.0.1",
+      serverAddress: '127.0.0.1',
       serverPort: 8989,
-      userName: "Alice",
-    };
+      userName: 'Alice',
+    }
   },
-  mounted() {
-  },
+  mounted() {},
   methods: {
     loginButton() {
-      this.$emit('login-event', this.serverAddress, this.serverPort, this.userName)
+      this.$emit(
+        'login-event',
+        this.serverAddress,
+        this.serverPort,
+        this.userName
+      )
     },
   },
-};
+}
 </script>
 
