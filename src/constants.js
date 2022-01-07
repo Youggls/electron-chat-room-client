@@ -14,3 +14,4 @@ export const RECEIVER_OFF = 'Receiver offline'
 export const SEND_SUCCESS = 'Send successfully'
 export const LOGIN_SUCCESS = 'Login successfully'
 export const DUP_NAME = 'Duplicate username'
+export const CHECK_TIME = 30 * 1000
