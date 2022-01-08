@@ -39,8 +39,8 @@ export default {
   },
   setup() {
     const chatRoom = ref()
-    const updateCurrentUser = (userList, userNumber) => {
-      chatRoom.value.updateCurrentUser(userList, userNumber)
+    const updateCurrentUser = (userList, userNumber, userName) => {
+      chatRoom.value.updateCurrentUser(userList, userNumber, userName)
     }
     const updateRecords = (newMessageObject) => {
       chatRoom.value.updateRecords(newMessageObject)
@@ -104,7 +104,8 @@ export default {
       if (status === TRUE) {
         const [userNumber, userListStr] = params.slice(1)
         const userList = userListStr.split('\n')
-        this.updateCurrentUser(userList, userNumber)
+        const userName = this.userName
+        this.updateCurrentUser(userList, userNumber, userName)
       } else {
         message.error('You are offline!')
       }
@@ -137,7 +138,6 @@ export default {
       )
     },
     sendMessage(chatType, messageDetail, receiverName = null) {
-      console.log('msg2')
       let param_receive = PUBLIC
       if (chatType !== PUBLIC) {
         param_receive = receiverName

@@ -3,8 +3,27 @@
     <a-layout>
       <a-layout-sider>
         <a-list item-layout="horizontal" :data-source="userList">
+          <a-list-item id="PUBLIC" v-on:click="switchChatRoom('PUBLIC')">
+            <a-list-item-meta>
+              <template #title>
+                <a style="color: #ffffff">Group Chat</a>
+              </template>
+              <template #avatar>
+                <img
+                  src="../assets/avatar.png"
+                  class="avatar"
+                  width="30"
+                  height="30"
+                />
+              </template>
+            </a-list-item-meta>
+          </a-list-item>
           <template #renderItem="{ item }">
-            <a-list-item>
+            <a-list-item
+              v-if="item !== userName"
+              :id="item"
+              v-on:click="switchChatRoom(item)"
+            >
               <a-list-item-meta>
                 <template #title>
                   <a style="color: #ffffff">{{ item }}</a>
@@ -29,15 +48,18 @@
         <div v-else>Private Chat. User Name: {{ currentChatUserName }}</div>
         <div class="message-box" id="scroll-box">
           <div>
-            <div v-for="(item, index) in records" :key="index">
+            <div
+              v-for="(item, index) in records[currentChatUserName]"
+              :key="index"
+            >
               <div
                 v-if="
-                  (item.chatType === 'PUBLIC' && isGroup) ||
-                  (
-                    !isGroup &&
+                  (item.chatType === 'PUBLIC' &&
+                    isGroup &&
+                    item.senderName !== userName) ||
+                  (!isGroup &&
                     item.chatType !== 'PUBLIC' &&
-                    item.senderName === currentChatUserName
-                  )
+                    item.senderName === currentChatUserName)
                 "
                 class="message-item"
               >
@@ -52,6 +74,31 @@
                   <span v-html="item.message" />
                 </div>
               </div>
+              <div
+                v-if="
+                  (item.chatType === 'PUBLIC' &&
+                    isGroup &&
+                    item.senderName === userName) ||
+                  (!isGroup &&
+                    item.chatType !== 'PUBLIC' &&
+                    item.senderName === userName)
+                "
+                class="self-message-item"
+              >
+                <div class="nickname">{{ item.senderName }}</div>
+                <div class="text" style="background-color: #70c14d">
+                  <span
+                    style="background-color: #70c14d"
+                    v-html="item.message"
+                  />
+                </div>
+                <img
+                  src="../assets/avatar.png"
+                  class="avatar"
+                  width="30"
+                  height="30"
+                />
+              </div>
             </div>
           </div>
         </div>
@@ -59,15 +106,16 @@
           <div class="chat-edit">
             <div class="chat-edit-input">
               <div>
-                <textarea
-                  v-model="content"
+                <a-textarea
+                  v-model:value="content"
                   :rows="6"
-                  placeholder="请输入内容"
+                  :bordered="false"
+                  placeholder="Please Input Message"
                   @keyup.enter="sendMessage"
                 />
               </div>
             </div>
-            <div class="chat-edit-footer">按Enter发送，Ctrl+Enter换行</div>
+            <div class="chat-edit-footer">Press Enter to send message</div>
           </div>
         </div>
       </a-layout-content>
@@ -79,58 +127,83 @@
 import { message } from 'ant-design-vue'
 import { PERSONAL, PUBLIC } from '../constants.js'
 export default {
-  name: 'Room',
+  name: 'ChatRoom',
   data() {
     return {
       userList: [],
       userNumber: 0,
+      userName: '',
       isGroup: true,
-      currentChatUserName: '',
+      currentChatUserName: PUBLIC,
       public: PUBLIC,
       personal: PERSONAL,
       content: '',
-      records: [
-        {
-          senderName: 'test1',
-          chatType: 'PUBLIC',
-          message: 'test msg',
-        },
-        {
-          senderName: 'test1',
-          chatType: 'PUBLIC',
-          message: 'test msg',
-        },
-        {
-          senderName: 'test1',
-          chatType: 'PERSONAL',
-          message: 'test msg',
-        },
-      ],
+      records: {
+        PUBLIC: [],
+      },
     }
   },
   methods: {
-    updateCurrentUser(userList, userNumber) {
+    updateCurrentUser(userList, userNumber, userName) {
+      console.log(userList)
       this.userList = userList
+      for (const user of userList) {
+        if (!(user in this.records)) {
+          this.records[user] = []
+        }
+      }
       this.userNumber = userNumber
+      this.userName = userName
     },
     updateRecords(newMessageObj) {
-      this.records.push(newMessageObj)
+      if (newMessageObj['chatType'] === PUBLIC) {
+        if (!(PUBLIC in this.records)) this.records[PUBLIC] = []
+        this.records[PUBLIC].push(newMessageObj)
+      } else {
+        const senderName = newMessageObj['senderName']
+        if (!(senderName in this.records)) this.records[senderName] = []
+        this.records[senderName].push(newMessageObj)
+      }
     },
     sendMessage() {
-      console.log('msg')
-      if (this.content === '' || this.content === null) {
+      console.log(this.userName)
+      if (
+        this.content === '' ||
+        this.content === null ||
+        this.content === '\n'
+      ) {
         message.warning('Please input message!')
+        this.content = ''
         return
       }
-      const chatType = this.isGroup ? PUBLIC: PERSONAL
-      this.$emit(
-        'send-event',
-        chatType,
-        this.content,
-        this.currentChatUserName
-      )
+      const chatType = this.isGroup ? PUBLIC : PERSONAL
+      if (!this.isGroup) {
+        const record = {
+          senderName: this.userName,
+          chatType: chatType,
+          message: this.content,
+          isRead: true,
+        }
+        this.records[this.currentChatUserName].push(record)
+      }
+      this.$emit('send-event', chatType, this.content, this.currentChatUserName)
       this.content = ''
-    }
+    },
+    switchChatRoom(targetChatName) {
+      if (targetChatName !== this.currentChatUserName) {
+        if (targetChatName === PUBLIC) this.isGroup = true
+        else this.isGroup = false
+        this.currentChatUserName = targetChatName
+        for (
+          let i = 0;
+          i < this.records[this.currentChatUserName].length;
+          i++
+        ) {
+          this.records[this.currentChatUserName][i]['isRead'] = true
+        }
+        this.$forceUpdate()
+      }
+    },
   },
 }
 </script>
@@ -142,6 +215,7 @@ export default {
 }
 .message-box {
   height: 592px;
+  overflow-y: scroll;
 }
 .text {
   display: inline-block;
@@ -165,13 +239,16 @@ export default {
   margin-left: 10px;
   text-align: left;
 }
+.self-message-item {
+  margin-right: 10px;
+  text-align: right;
+}
 .chat-edit-items {
   height: 40px;
   padding: 0 20px;
 }
 .chat-edit-input {
   height: 120px;
-  overflow: hidden;
 }
 .chat-edit-footer {
   height: 30px;
