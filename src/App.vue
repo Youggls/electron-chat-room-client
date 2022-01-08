@@ -62,9 +62,6 @@ export default {
       }
       console.log(rinfo)
     })
-    setInterval(() => {
-      this.sendCheck()
-    }, CHECK_TIME)
   },
   methods: {
     login(serverAddress, serverPort, userName) {
@@ -95,6 +92,9 @@ export default {
         this.showLogin = false
         this.showRoom = true
         this.sendCheck()
+        setInterval(() => {
+          this.sendCheck()
+        }, CHECK_TIME)
       } else {
         message.error(errMsg)
       }
@@ -116,7 +116,7 @@ export default {
         senderName: senderName,
         chatType: chatType,
         message: message,
-        isRead: false
+        isRead: false,
       }
       this.updateRecords(messageObject)
     },
