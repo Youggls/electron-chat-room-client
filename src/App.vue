@@ -116,6 +116,7 @@ export default {
         senderName: senderName,
         chatType: chatType,
         message: message,
+        isRead: false
       }
       this.updateRecords(messageObject)
     },
