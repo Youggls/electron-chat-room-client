@@ -18,8 +18,8 @@
               </template>
             </a-list-item-meta>
             <a-tag color="red" v-if="unreadCount['PUBLIC'] !== 0">
-                  {{ unreadCount['PUBLIC'] }}
-                </a-tag>
+              {{ unreadCount['PUBLIC'] }}
+            </a-tag>
           </a-list-item>
           <template #renderItem="{ item }">
             <a-list-item
@@ -41,7 +41,7 @@
                 </template>
               </a-list-item-meta>
               <a-tag color="red" v-if="unreadCount[item] !== 0">
-                    {{ unreadCount[item] }}
+                {{ unreadCount[item] }}
               </a-tag>
             </a-list-item>
           </template>
@@ -58,6 +58,9 @@
               v-for="(item, index) in records[currentChatUserName]"
               :key="index"
             >
+              <p class="time">
+                <span class="time-span">{{ item.time }}</span>
+              </p>
               <div
                 v-if="
                   (item.chatType === 'PUBLIC' &&
@@ -153,6 +156,32 @@ export default {
     }
   },
   methods: {
+    getNowFormatDate() {
+      let date = new Date()
+      const seperator1 = '-'
+      const seperator2 = ':'
+      let month = date.getMonth() + 1
+      let strDate = date.getDate()
+      if (month >= 1 && month <= 9) {
+        month = '0' + month
+      }
+      if (strDate >= 0 && strDate <= 9) {
+        strDate = '0' + strDate
+      }
+      const currentdate =
+        date.getFullYear() +
+        seperator1 +
+        month +
+        seperator1 +
+        strDate +
+        ' ' +
+        date.getHours() +
+        seperator2 +
+        date.getMinutes() +
+        seperator2 +
+        date.getSeconds()
+      return currentdate
+    },
     updateCurrentUser(userList, userNumber, userName) {
       console.log(userList)
       this.userList = userList
@@ -166,6 +195,7 @@ export default {
       this.userName = userName
     },
     updateRecords(newMessageObj) {
+      newMessageObj['time'] = this.getNowFormatDate()
       if (newMessageObj['chatType'] === PUBLIC) {
         if (!(PUBLIC in this.records)) this.records[PUBLIC] = []
         this.records[PUBLIC].push(newMessageObj)
@@ -174,7 +204,8 @@ export default {
         const senderName = newMessageObj['senderName']
         if (!(senderName in this.records)) this.records[senderName] = []
         this.records[senderName].push(newMessageObj)
-        if (this.currentChatUserName !== senderName) this.unreadCount[senderName] += 1
+        if (this.currentChatUserName !== senderName)
+          this.unreadCount[senderName] += 1
       }
     },
     sendMessage() {
@@ -195,6 +226,7 @@ export default {
           chatType: chatType,
           message: this.content,
           isRead: true,
+          time: this.getNowFormatDate(),
         }
         this.records[this.currentChatUserName].push(record)
       }
@@ -268,5 +300,17 @@ export default {
   padding: 0 20px;
   text-align: right;
   color: #bcbcbc;
+}
+.time {
+  margin: 7px 0;
+  text-align: center;
+}
+.time-span {
+  display: inline-block;
+  padding: 0 18px;
+  font-size: 12px;
+  color: #fff;
+  border-radius: 2px;
+  background-color: #dcdcdc;
 }
 </style>
