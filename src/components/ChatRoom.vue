@@ -17,6 +17,9 @@
                 />
               </template>
             </a-list-item-meta>
+            <a-tag color="red" v-if="unreadCount['PUBLIC'] !== 0">
+                  {{ unreadCount['PUBLIC'] }}
+                </a-tag>
           </a-list-item>
           <template #renderItem="{ item }">
             <a-list-item
@@ -37,6 +40,9 @@
                   />
                 </template>
               </a-list-item-meta>
+              <a-tag color="red" v-if="unreadCount[item] !== 0">
+                    {{ unreadCount[item] }}
+              </a-tag>
             </a-list-item>
           </template>
         </a-list>
@@ -141,6 +147,9 @@ export default {
       records: {
         PUBLIC: [],
       },
+      unreadCount: {
+        PUBLIC: 0,
+      },
     }
   },
   methods: {
@@ -150,6 +159,7 @@ export default {
       for (const user of userList) {
         if (!(user in this.records)) {
           this.records[user] = []
+          this.unreadCount[user] = 0
         }
       }
       this.userNumber = userNumber
@@ -159,10 +169,12 @@ export default {
       if (newMessageObj['chatType'] === PUBLIC) {
         if (!(PUBLIC in this.records)) this.records[PUBLIC] = []
         this.records[PUBLIC].push(newMessageObj)
+        if (this.currentChatUserName !== PUBLIC) this.unreadCount[PUBLIC] += 1
       } else {
         const senderName = newMessageObj['senderName']
         if (!(senderName in this.records)) this.records[senderName] = []
         this.records[senderName].push(newMessageObj)
+        if (this.currentChatUserName !== senderName) this.unreadCount[senderName] += 1
       }
     },
     sendMessage() {
@@ -200,6 +212,7 @@ export default {
           i++
         ) {
           this.records[this.currentChatUserName][i]['isRead'] = true
+          this.unreadCount[this.currentChatUserName] = 0
         }
         this.$forceUpdate()
       }
